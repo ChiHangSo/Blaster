@@ -2,6 +2,8 @@
 
 
 #include "Casing.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
 
 // Sets default values
 ACasing::ACasing()
@@ -11,13 +13,34 @@ ACasing::ACasing()
 
 	CasingMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CasingMesh"));
 	SetRootComponent(CasingMesh);
+	// This stops the bullet from colliding with the camera
+	CasingMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	CasingMesh->SetSimulatePhysics(true);
+	CasingMesh->SetEnableGravity(true);
+	// We need to Notify the hit event since we are using physics
+	CasingMesh->SetNotifyRigidBodyCollision(true);
 
+	ShellEjectionImpulse = 10.0f;
 }
 
 void ACasing::BeginPlay()
 {
 	Super::BeginPlay();
+
+	CasingMesh->OnComponentHit.AddDynamic(this, &ACasing::OnHit);
+	//Helps bouce off the casing
+	CasingMesh->AddImpulse(GetActorForwardVector() * ShellEjectionImpulse);
 	
+}
+
+void ACasing::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	if (ShellSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, ShellSound, GetActorLocation());
+	}
+
+	Destroy();
 }
 
 

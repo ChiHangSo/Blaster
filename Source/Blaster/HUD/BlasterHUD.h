@@ -6,6 +6,22 @@
 #include "GameFramework/HUD.h"
 #include "BlasterHUD.generated.h"
 
+// If we want to use blueprint
+USTRUCT(BlueprintType)
+struct FHUDPackage
+{
+	// This is for the reflection system to use this.
+	GENERATED_BODY()
+public:
+	class UTexture2D* CrosshairsCenter;
+	UTexture2D* CrosshairsLeft;
+	UTexture2D* CrosshairsRight;
+	UTexture2D* CrosshairsTop;
+	UTexture2D* CrosshairsBottom;
+	float CrosshairSpread;
+	FLinearColor CrosshairsColor;
+};
+
 /**
  * 
  */
@@ -13,5 +29,17 @@ UCLASS()
 class BLASTER_API ABlasterHUD : public AHUD
 {
 	GENERATED_BODY()
+
+public:
+	virtual void DrawHUD() override;
 	
+private:
+	FHUDPackage HUDPackage;
+
+	void DrawCrosshair(UTexture2D* Texture, FVector2d ViewportCenter, FVector2D Spread, FLinearColor CrosshairColor);
+
+	UPROPERTY(EditAnywhere)
+	float CrosshairSpreadMax = 16.0f;
+public:
+	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }
 };

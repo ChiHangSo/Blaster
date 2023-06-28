@@ -5,10 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Blaster/BlasterTypes/TurningInPlace.h"
+#include "Blaster/Interfaces/InteractWithCrosshairsInterface.h"
 #include "BlasterCharacter.generated.h"
 
 UCLASS()
-class BLASTER_API ABlasterCharacter : public ACharacter
+class BLASTER_API ABlasterCharacter : public ACharacter, public IInteractWithCrosshairsInterface
 {
 	GENERATED_BODY()
 
@@ -24,6 +25,12 @@ public:
 	virtual void PostInitializeComponents() override;
 
 	void PlayFireMontage(bool bAiming);
+
+	// This can be a unrealiable RPC since it's just cosmetic, it doesn't affect much gameplay
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastHit();
+
+	virtual void OnRep_ReplicatedMovement() override;
 
 protected:
 	// Called when the game starts or when spawned
@@ -45,9 +52,18 @@ protected:
 	// 59
 	void AimOffset(float DeltaTime);
 
+	// This helps calculate the pitch for our sim proxies
+	void CalculateAO_Pitch();
+
+	// 92
+	//This Handle turns for simulated Proxies
+	void SimProxiesTurn();
+
 	virtual void Jump() override;
 	void FireButtonPressed();
 	void FireButtonReleased();
+
+	void PlayHitReactMontage();
 
 private:
 
@@ -87,6 +103,23 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	class UAnimMontage* FireWeaponMontage;
 
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	UAnimMontage* HitReactMontage;
+
+	void HideCameraIfCharacterClose();
+
+	UPROPERTY(EditAnywhere)
+	float CameraThreshHold = 200.0f;
+
+	bool bRotateRootBone;
+
+	float TurnThreshHold = 0.5f;
+	FRotator ProxyRotationLastFrame;
+	FRotator ProxyRotation;
+	float ProxyYaw;
+	float TimeSinceLastMovementReplication;
+	float CalculateSpeed();
+
 public:
 	// Public Setter to have this on Weapon.h
 	void SetOverlappingWeapon(AWeapon* Weapon);
@@ -101,4 +134,10 @@ public:
 	AWeapon* GetEquippedWeapon();
 
 	FORCEINLINE ETurningInPlace GetTurnInPlace() const { return TurningInPlace; };
+
+	FVector GetHitTarget() const;
+
+	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
 };
