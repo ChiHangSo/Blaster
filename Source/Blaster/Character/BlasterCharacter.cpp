@@ -312,7 +312,6 @@ void ABlasterCharacter::CalculateAO_Pitch()
 void ABlasterCharacter::SimProxiesTurn()
 {
 	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
-	
 	bRotateRootBone = false;
 	float Speed = CalculateSpeed();
 	if (Speed > 0.0f)

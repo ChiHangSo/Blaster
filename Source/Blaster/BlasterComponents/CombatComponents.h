@@ -43,6 +43,8 @@ protected:
 	// We are firing either on the client or server
 	void FireButtonPressed(bool bPressed);
 
+	void Fire();
+
 	// This is a server RPC, we also want this to be reliable because it's firing a weapon
 	UFUNCTION(Server, Reliable)
 	void ServerFire(const FVector_NetQuantize& TraceHitTarget);
@@ -104,6 +106,14 @@ private:
 
 	void InterpFOV(float DeltaTime);
 
+	/*
+	* Automatic Fire
+	*/
+	FTimerHandle FireTimer;
+	bool bCanFire = true;
+
+	void StartFireTimer();
+	void FireTimerFinished();
 
 public:	
 		
