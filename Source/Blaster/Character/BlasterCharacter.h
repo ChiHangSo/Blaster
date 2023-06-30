@@ -27,8 +27,12 @@ public:
 	void PlayFireMontage(bool bAiming);
 
 	// This can be a unrealiable RPC since it's just cosmetic, it doesn't affect much gameplay
-	UFUNCTION(NetMulticast, Unreliable)
-	void MulticastHit();
+	//UFUNCTION(NetMulticast, Unreliable)
+	//void MulticastHit();
+	/*
+	*  Lecture 100, the reason why we are removing this is because getting a replicated variable is way better than sending an rpc. We also want to play hit once
+	*  Damage has been taken
+	*/
 
 	virtual void OnRep_ReplicatedMovement() override;
 
@@ -65,6 +69,11 @@ protected:
 
 	void PlayHitReactMontage();
 
+	// This is the function where we can bind to a built in delegate to receive damage
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
+
+	void UpdateHUDHealth();
 private:
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
