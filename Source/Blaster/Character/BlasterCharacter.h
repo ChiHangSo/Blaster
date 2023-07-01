@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Blaster/BlasterTypes/TurningInPlace.h"
 #include "Blaster/Interfaces/InteractWithCrosshairsInterface.h"
+#include "Components/TimelineComponent.h"
 #include "BlasterCharacter.generated.h"
 
 UCLASS()
@@ -26,6 +27,8 @@ public:
 
 	void PlayFireMontage(bool bAiming);
 
+	void PlayElimMontage();
+
 	// This can be a unrealiable RPC since it's just cosmetic, it doesn't affect much gameplay
 	//UFUNCTION(NetMulticast, Unreliable)
 	//void MulticastHit();
@@ -35,6 +38,11 @@ public:
 	*/
 
 	virtual void OnRep_ReplicatedMovement() override;
+
+	void Elim();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastElim();
 
 protected:
 	// Called when the game starts or when spawned
@@ -73,6 +81,7 @@ protected:
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
 
+	// This function helps us know if our HUD is valid, and this will set our widget
 	void UpdateHUDHealth();
 private:
 
@@ -115,6 +124,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	UAnimMontage* HitReactMontage;
 
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	UAnimMontage* ElimMontage;
+
 	void HideCameraIfCharacterClose();
 
 	UPROPERTY(EditAnywhere)
@@ -143,6 +155,42 @@ private:
 
 	class ABlasterPlayerController* BlasterPlayerController;
 
+	bool bElim = false;
+
+	FTimerHandle ElimTimer;
+
+	UPROPERTY(EditDefaultsOnly) 
+	float ElimDelay = 3.0f;
+
+	void ElimTimerFinished();
+
+	/*
+	* Disolve Effect
+	*/
+
+	UPROPERTY(VisibleAnywhere)
+	UTimelineComponent* DissolveTimeline;
+
+	FOnTimelineFloat DissolveTrack;
+	
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* DisolveCurve;
+
+	// We would like to use this to update the material on our character
+	UFUNCTION()
+	void UpdateDissolveMaterial(float DisolveValue);
+
+	// This will start our timeline, is also going to bind our updatedissolve callback
+	void StartDissolve();
+
+	// We would use this to store our dynamic instance we use in runtime / Dynamic Instance that we can change at runtime
+	UPROPERTY(VisibleAnywhere, Category = Elim)
+	UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
+
+	// This would be the actual material that will be created / Material Instance set on Blueprint, used with the dynamic instance
+	UPROPERTY(EditAnywhere, Category = Elim)
+	UMaterialInstance* DissolveMaterialInstance;
+
 public:
 	// Public Setter to have this on Weapon.h
 	void SetOverlappingWeapon(AWeapon* Weapon);
@@ -163,4 +211,6 @@ public:
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
+
+	FORCEINLINE bool IsElimmed() const { return bElim; }
 };
