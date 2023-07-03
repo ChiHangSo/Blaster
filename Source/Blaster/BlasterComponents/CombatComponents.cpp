@@ -150,6 +150,14 @@ void UCombatComponents::OnRep_EquippedWeapon()
 {
 	if (EquippedWeapon && Character)
 	{
+		// We include this to make sure our physics are being called first before the detaching the socket
+		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+		const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
+
+		if (HandSocket)
+		{
+			HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
+		}
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
 	}

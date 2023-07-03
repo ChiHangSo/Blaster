@@ -16,6 +16,9 @@
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/GameMode/BlasterGameMode.h"
 #include "TimerManager.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+#include "Particles/ParticleSystemComponent.h"
 
 // Sets default values
 ABlasterCharacter::ABlasterCharacter()
@@ -68,8 +71,13 @@ void ABlasterCharacter::OnRep_ReplicatedMovement()
 
 void ABlasterCharacter::Elim()
 {
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->EquippedWeapon->Dropped();
+	}
 	MulticastElim();
 	GetWorldTimerManager().SetTimer(ElimTimer, this, &ABlasterCharacter::ElimTimerFinished, ElimDelay);
+
 }
 
 void ABlasterCharacter::MulticastElim_Implementation()
@@ -77,14 +85,50 @@ void ABlasterCharacter::MulticastElim_Implementation()
 	bElim = true;
 	PlayElimMontage();
 
+	// Start desolve Material effect
 	if (DissolveMaterialInstance)
 	{
 		DynamicDissolveMaterialInstance = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
 		GetMesh()->SetMaterial(0, DynamicDissolveMaterialInstance);
-		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Disolve"), 0.55f);
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Dissolve"), 0.55f);
 		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Glow"), 200.f);
 	}
 	StartDissolve();
+
+	// Disable Character movement
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+
+	// Disable the input of the player once dead
+	if (BlasterPlayerController)
+	{
+		DisableInput(BlasterPlayerController);
+	}
+
+	// Disable Collision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// Spawn Elim bot
+	if (ElimBotEffect)
+	{
+		FVector ElimBotSpawnLocation(GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z + 200.0f);
+		ElimBotComponent = UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			ElimBotEffect,
+			ElimBotSpawnLocation,
+			GetActorRotation()
+		);
+	}
+
+	if (ElimBotSound)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(
+			this,
+			ElimBotSound,
+			GetActorLocation()
+		);
+	}
 }
 
 void ABlasterCharacter::ElimTimerFinished()
@@ -94,6 +138,17 @@ void ABlasterCharacter::ElimTimerFinished()
 	{
 		// We don't need to check if controller is valid since requestRespawn does it for us
 		BlasterGameMode->RequestRespawn(this, Controller);
+	}
+
+}
+
+void ABlasterCharacter::Destroyed()
+{
+	Super::Destroyed();
+
+	if (ElimBotComponent)
+	{
+		ElimBotComponent->DestroyComponent();
 	}
 }
 
@@ -523,7 +578,7 @@ void ABlasterCharacter::UpdateDissolveMaterial(float DisolveValue)
 {
 	if (DynamicDissolveMaterialInstance)
 	{
-		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Disolve"), DisolveValue);
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Dissolve"), DisolveValue);
 	}
 }
 
