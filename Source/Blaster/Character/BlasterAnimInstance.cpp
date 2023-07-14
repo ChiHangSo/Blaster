@@ -84,5 +84,9 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		//FVector MuzzleX(FRotationMatrix(MuzzleTipTransform.GetRotation().Rotator()).GetUnitAxis(EAxis::X));
 		//DrawDebugLine(GetWorld(), MuzzleTipTransform.GetLocation(), MuzzleTipTransform.GetLocation() + MuzzleX * 1000.0f, FColor::Red);
 		//DrawDebugLine(GetWorld(), MuzzleTipTransform.GetLocation(), BlasterCharacter->GetHitTarget(), FColor::Orange);
+
+		//bUseFABRIK = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
+		//bUseAimOffsets = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading && !BlasterCharacter->GetDisableGameplay();
+		//bTransformRightHand = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
 	}
 }

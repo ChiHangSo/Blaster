@@ -46,6 +46,11 @@ public:
 
 	virtual void Destroyed() override;
 
+	// 132
+	// A boolean to tell the game that the game is restarting
+	UPROPERTY(Replicated)
+	bool bDisableGameplay = false;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -85,6 +90,12 @@ protected:
 
 	// This function helps us know if our HUD is valid, and this will set our widget
 	void UpdateHUDHealth();
+
+	// Pull for any relevant classes and initializes our HUD
+	void PullInit();
+
+	// Simplifying the function of turning in place
+	void RotateInPlace(float DeltaTime);
 private:
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -155,6 +166,7 @@ private:
 	UFUNCTION()
 	void OnRep_Health();
 
+	UPROPERTY()
 	class ABlasterPlayerController* BlasterPlayerController;
 
 	bool bElim = false;
@@ -170,13 +182,12 @@ private:
 	* Disolve Effect
 	*/
 
-	UPROPERTY(VisibleAnywhere)
-	UTimelineComponent* DissolveTimeline;
-
+	//UPROPERTY(VisibleAnywhere)
+	class UTimelineComponent* DissolveTimeline;
 	FOnTimelineFloat DissolveTrack;
 	
 	UPROPERTY(EditAnywhere)
-	UCurveFloat* DisolveCurve;
+	UCurveFloat* DissolveCurve;
 
 	// We would like to use this to update the material on our character
 	UFUNCTION()
@@ -205,6 +216,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ElimBotSound;
 
+	UPROPERTY()
+	class ABlasterPlayerState* BlasterPlayerState;
+
 public:
 	// Public Setter to have this on Weapon.h
 	void SetOverlappingWeapon(AWeapon* Weapon);
@@ -227,4 +241,9 @@ public:
 	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
 
 	FORCEINLINE bool IsElimmed() const { return bElim; }
+
+	FORCEINLINE float GetHealth() const { return Health; }
+	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
+	FORCEINLINE UCombatComponents* GetCombat() const { return Combat; }
+	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 };
